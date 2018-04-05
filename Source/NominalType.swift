@@ -24,14 +24,20 @@ protocol NominalType : MetadataType {
 }
 
 extension NominalType {
-    var nominalTypeDescriptor: NominalTypeDescriptor? {
+	
+	var nominalTypeDescriptor: NominalTypeDescriptor? {
         let pointer = UnsafePointer<Int>(self.pointer)
         let base = pointer.advanced(by: nominalTypeDescriptorOffsetLocation)
         if base.pointee == 0 {
             // swift class created dynamically in objc-runtime didn't have valid nominalTypeDescriptor
             return nil
         }
-        return NominalTypeDescriptor(pointer: relativePointer(base: base, offset: base.pointee))
+		
+		#if swift(>=4.1)
+			return NominalTypeDescriptor(pointer: relativePointer(base: base, offset: base.pointee - base.hashValue))
+		#else
+			return NominalTypeDescriptor(pointer: relativePointer(base: base, offset: base.pointee))
+		#endif
     }
 
     var fieldTypes: [Any.Type]? {
